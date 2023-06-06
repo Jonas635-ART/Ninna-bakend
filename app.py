@@ -1,101 +1,43 @@
-from flask import Flask, request
+from flask import Flask 
 from datetime import datetime
-from flask_cors import CORS, cross_origin
+from flask_restful import Api
+from controllers.bralettes import ( BralettesController, 
+                                    BraletteController )
+from controllers.Descripcion import (DescripcionController,
+                                     buscarDescripcionController )
+from config import conexion,validador
 
 app = Flask(__name__)
-CORS(app=app, origins=[''], methods='*', allow_headers=['Content_type'])
+# Creamos la instancia flask_restful y le indicamos que toda la config se agreguea esta instancia
+api = Api(app=app)
+app.config ['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:root@127.0.0.1:3306/ninnary'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# ->jala la config del flask y extrae su conexion a la base de datos
+conexion.init_app(app)
+# ->indicamos la creacion de todas las tablas
+# ->tenemos que declarar en el parametro app nuestra app
+validador.init_app(app)
+#conexion.create_all(app=app)
 
-clientes = [
-    {
-    "nombre": "Fernada",
-    "pais": "Ecuador",
-    "id": 1,
-    "edad": 32
-    }
-]
-
-
-
-def buscar_usuario(id):
-  
-    for cliente in clientes:
-      if cliente.get('id') == id:
-            return cliente
-
-@app.route('/')
-@cross_origin(origins=['http://127.0.0.1:8080'])
-def estado():
-    hora = datetime.now()
-    return {
+@app.route('/status', methods=['GET'])
+def status():
+    return{
         'status': True,
-        'hour': hora.strftime('%Y/%m/%d %H:%M:%S')
-    }
+        'date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        } 
+     
+@app.route('/')
+def inicio():
+    return {'hello world'}
+# Definiremos las rutas que vamos a utilizar con un controlador
+api.add_resource(BralettesController, '/bralettes', '/bralette')
+api.add_resource(BraletteController, '/Producto/<int:id>')
+api.add_resource(DescripcionController, '/description')
+api.add_resource(buscarDescripcionController, '/buscar_Description')
 
+# -> comprueba si la clase flask se ejecuta en el archivo principal del proyecto, esto evita un posible error en el flask
 
-@app.route("/clientes", methods=['POST', 'GET'])
-def obten_clientes():
-    # solo request es llamado en cada controlador(funcion que se ejecuta cuando el front hace una peticion)
-    print(request.method)
-    # request.method > mostrara el tipo de metodo al cual hace la consulta el front
-    print(request.get_json())
-    # request.get_json() > devuelve la info enviada al body y la convierte en un diccionario para que python lo entienda
-    # y manipula
-    if request.method == 'POST':
-        # ingresa cuando sea POST
-        data = request.get_json()
-        data['id'] = len(clientes) + 1  # ->esto no sirve para asignar
-        clientes.append(data)
-        return {
-            'message': 'Cliente agregado',
-            'client': data
-        }
+#-> este archivo no es el principal
+if __name__ == '__main__':
+    app.run(debug=True)
 
-    else:
-    # elif request.method == 'GET':
-    # ingresa cuando el metodo sea GET
-        return {
-        'message': 'lista de clientes',
-        'clients': clientes
-        }
-
-
-@app.route("/cliente/<int:id>", methods=['GET', 'PUT', 'DELETE'])
-def gestion_usuario(id):
-    print(id)
-    if request.method == 'GET':
-        usuario = buscar_usuario(id)
-        if usuario:
-            return usuario
-        else:
-            return {
-                'message': 'no encontro usuario'
-            }, 404
-    elif request.method == 'PUT':
-        resultado = buscar_usuario(id)
-        if resultado is not None:
-            [cliente, posicion] = resultado
-
-            data = request.get_json()
-            data['id'] = id
-            clientes[posicion] = data
-            return clientes[posicion]
-    elif request.method == 'DELETE':
-        resultado = buscar_usuario(id)
-        if resultado:
-            [usuario, posicion] = resultado
-            cliente_eliminado = clientes.pop(posicion)
-            return {
-                'message':'eliminado',
-                'cliente': cliente_eliminado
-            }
-
-        else:
-            return {
-            'message': 'El cliente a modificar no se encontro'
-            }, 404
-
-
-
-# debug > si esta hablitado (True) se reinicia el srvidor en automatico cada vez que guardamos cambios
-# port > indica que puerto usaremos, por defecto el 8080
-app.run(debug=True, port=8080)

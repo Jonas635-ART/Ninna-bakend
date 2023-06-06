@@ -1,1 +1,10 @@
 entorno_flask/
+excluimos todos los archivos pyc de python
+*.pyc
+
+
+
+
+
+
+
