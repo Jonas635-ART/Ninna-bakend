@@ -1,7 +1,8 @@
 from flask_restful import Resource, request
 from config import conexion
-from dtos.bralettes_dto import  (
-                                BraletteRequestDTO,BraletteResponseDTO)
+from dtos.bralettes_dto import    (  BraletteRequestDTO,
+                                    BraletteResponseDTO,
+                                    PedidobraletteResponseDTO )
 from models.bralettes import Bralette
 # todos los metodos http que utilizamos se definen como metodos de la clase
 class BralettesController(Resource):
@@ -79,8 +80,21 @@ class BraletteController(Resource):
                 'content': e.args
             }, 400
 
-
-
+class BraleteController(Resource):
+    def get(self, id):
+        Bralette = conexion.session.query(Bralette).filter(Bralette.id == id).first()
+        if Bralette is None:
+            return {
+                'message':'No se encontro'
+            }, 404
+        else:
+            print(Bralette.pedidos)
+            respuesta = PedidobraletteResponseDTO().dump(Bralette)
+            return {
+                'message':'receta encontrada',
+                'content': respuesta
+            }, 200
+        
 
 
 

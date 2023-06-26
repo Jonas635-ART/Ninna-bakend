@@ -1,4 +1,5 @@
 from config import validador
+
 from models.descripcion import Descripcion
 from marshmallow import fields
 
@@ -11,12 +12,11 @@ class DescripcionResponseDTO(validador.SQLAlchemyAutoSchema):
     class Meta:
         model = Descripcion
 
-class BuscarDescripcionRequestDTO(validador.SQLAlchemyAutoSchema):
-    nombre = fields.String(required= True)
+class BuscarDescripcionRequestDTO(validador.Schema):
+    nombre = fields.String(required= False)
     color = fields.String(required= False)
     stock = fields.Integer(required= False)
-    precio = fields.String(required= True)
-
+    precio = fields.String(required= False)
 
 
 
